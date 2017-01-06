@@ -1,4 +1,4 @@
-ELECT
+SELECT
        transaction_date,
        term,
        email,
