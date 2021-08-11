@@ -1,4 +1,4 @@
-"SELECT 
+SELECT 
        a.label AS `Page`,
        CASE a.label /* Case in order to convert it to the row-wise order */
          WHEN 'Home_Page'     THEN home_page_count
@@ -147,14 +147,13 @@ END;
 
 
 
-"WITH cte_first AS (
+WITH cte_first AS (
  SELECT day_,
         stock_price,
         MIN(stock_price)  OVER(ORDER BY RIGHT(day_,2), stock_price ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS min_value,
         LEAD(stock_price) OVER(ORDER BY RIGHT(day_,2), stock_price)                                                  AS lead_value,
         
         ROW_NUMBER()     OVER()                                                                                     AS ranking_
-        -- MAX(stock_price) OVER(ORDER BY day_, stock_price ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS max_value
  FROM 
    (
  SELECT 'Day 1' AS day_, 3 AS stock_price
@@ -193,7 +192,15 @@ END;
                                                         FROM cte_first
                 
                                                         )                 
--- Finally, querying the ctes and picking up the N number of best buying and selling days                          
+-- Finally, querying the ctes and picking up the N number of best buying and selling days
+SELECT 
+        best_day_to_buy,
+        day_buying_stock_price,
+        best_day_to_sell,
+        day_selling_stock_price,
+        stock_price_gain
+FROM 
+(
 SELECT 
        day_buying.day_                                              AS best_day_to_buy,
        CONCAT('$',day_buying.stock_price)                           AS day_buying_stock_price,
@@ -205,11 +212,14 @@ FROM cte_best_buying_day AS day_buying CROSS JOIN (SELECT day_,
                                                           delta_stock_price_and_min_value,
                                                           ranking_
                                                    FROM cte_best_selling_day
-                                                   WHERE rank_order_delta <=4
+                                                   -- WHERE rank_order_delta <=4
                                                   ) AS day_selling
 WHERE day_selling.ranking_ > day_buying.ranking_
 GROUP BY 1,2,3,4,5
 ORDER BY 5 DESC
+  ) AS main 
+WHERE stock_price_gain >=10 -- eliminating any gain less than 10  
+  
   
   
   
@@ -220,7 +230,6 @@ WITH cte_first AS (
         LEAD(stock_price) OVER(ORDER BY RIGHT(day_,2), stock_price)                                                  AS lead_value,
         
         ROW_NUMBER()     OVER()                                                                                     AS ranking_
-        -- MAX(stock_price) OVER(ORDER BY day_, stock_price ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS max_value
  FROM 
    (
  SELECT 'Day 1' AS day_, 2 AS stock_price
@@ -248,7 +257,7 @@ WITH cte_first AS (
                                stock_price,
                                ranking_
                              FROM cte_first
-                             ORDER BY stock_price ASC LIMIT 4
+                             ORDER BY stock_price ASC -- LIMIT 4
                              ),
                               cte_best_selling_day AS  (SELECT -- Ranking the data by the stock_price from the buying to possible selling price with the largest dalta
                                                              day_,
@@ -261,6 +270,14 @@ WITH cte_first AS (
                                                         )                 
 -- Finally, querying the ctes and picking up the N number of best buying and selling days                          
 SELECT 
+        best_day_to_buy,
+        day_buying_stock_price,
+        best_day_to_sell,
+        day_selling_stock_price,
+        stock_price_gain
+FROM 
+(  
+SELECT 
        day_buying.day_                                              AS best_day_to_buy,
        CONCAT('$',day_buying.stock_price)                           AS day_buying_stock_price,
        day_selling.day_                                             AS best_day_to_sell,
@@ -271,9 +288,9 @@ FROM cte_best_buying_day AS day_buying CROSS JOIN (SELECT day_,
                                                           delta_stock_price_and_min_value,
                                                           ranking_
                                                    FROM cte_best_selling_day
-                                                   WHERE rank_order_delta <=4
                                                   ) AS day_selling
 WHERE day_selling.ranking_ > day_buying.ranking_
 GROUP BY 1,2,3,4,5
 ORDER BY 5 DESC
-                  "
+) AS main 
+WHERE stock_price_gain >=10 -- eliminating any gain less than 10
