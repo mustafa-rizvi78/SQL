@@ -1,0 +1,463 @@
+
+
+
+Table of Contents
+Data Quality Issues
+Summary and Overview
+File Inventory Status
+Top 15 Users
+Total and Average File Creation by Day
+File Updated Distribution in Days
+File Updated Lifetime
+Executive Summary
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+> summary(data_analyst_assignment_csv)
+   FILE_ID              USER              CREATED                   
+ Length:102133      Length:102133      Min.   :2019-08-01 00:00:00  
+ Class :character   Class :character   1st Qu.:2019-08-20 00:00:00  
+ Mode  :character   Mode  :character   Median :2019-09-12 00:00:00  
+                                       Mean   :2019-09-13 07:57:58  
+                                       3rd Qu.:2019-10-07 00:00:00  
+                                       Max.   :2019-10-31 00:00:00  
+                                                                    
+    UPDATED                       DELETED                      VERSION         
+ Min.   :2019-08-01 00:00:00   Min.   :1970-01-01 00:00:00   Length:102133     
+ 1st Qu.:2019-09-09 00:00:00   1st Qu.:2019-09-05 00:00:00   Class :character  
+ Median :2019-10-12 00:00:00   Median :2019-10-06 00:00:00   Mode  :character  
+ Mean   :2019-10-12 14:40:38   Mean   :2019-04-25 01:06:03                     
+ 3rd Qu.:2019-11-12 00:00:00   3rd Qu.:2019-11-01 00:00:00                     
+ Max.   :2020-02-04 00:00:00   Max.   :2020-02-04 00:00:00                     
+                               NA's   :73795 
+
+Data Quality Issues:
+
+The following are the two most glaring data quality issues that catch the attention immediately. 
+
+The “Version” column has “NA” data, in addition, there are some alphanumeric values that exist in that column also. In order to make that column purely numeric, these rows need to be converted to NULL. Another option is to create a new column in the data frame and convert all these values to NULL so that these values don’t impact the average calculation. 
+
+
+data_issues_VERSION_column <- data_analyst_assignment_csv[grep("[a-zA-Z]",data_analyst_assignment_csv$VERSION),]
+> unique(data_issues_VERSION_column$VERSION)
+ [1] "pp"  "fgT" "1pp" "4pp" "ffR" "nnJ" "3pp" "Gty" "ddR" "2pp"
+
+
+Here is the quick way to create a new dataframe with “VERSION” column only including the numeric data, and then converting it to an integer column. It is a three step process. The first is to copy the alphanumeric character from the “VERSION” into a new dataframe, then comparing the newly created dataframe with the existing dataframe and excluding the newly created dataframe’s fileIDs from the existing dataframe. Lastly, copy that into a new data frame. Now, the newly dataframe will have all the VERSION data as number (it only needs to converted to integer explicitly via the as.integer function call)
+
+
+files_with_VERSION_alpha_characters <- data_analyst_assignment_csv[grep("[a-zA-Z]",data_analyst_assignment_csv$VERSION),]
+
+VERSION_column_number <- data_analyst_assignment_csv[!((data_analyst_assignment_csv$FILE_ID) %in% (files_with_VERSION_alpha_characters$FILE_ID)),]
+
+
+VERSION_column_number$VERSION <- as.integer(VERSION_column_number$VERSION)
+
+
+
+Secondly, the “deleted” column has some values which are earlier than the “created at” which don’t make sense. There are 259 of those rows. They need to be eliminated when performing the average file duration calculation.
+
+
+> subset(data_analyst_assignment_csv,DELETED < CREATED,select=(1:6))
+# A tibble: 259 x 6
+   FILE_ID  USER    CREATED             UPDATED             DELETED             VERSION
+   <chr>    <chr>   <dttm>              <dttm>              <dttm>              <chr>  
+ 1 rrT0625  2853751 2019-08-01 00:00:00 2019-11-19 00:00:00 1970-01-01 00:00:00 26     
+ 2 KLp3685  2728736 2019-08-01 00:00:00 2019-08-01 00:00:00 1970-01-01 00:00:00 2      
+ 3 KLp4075  3161776 2019-08-01 00:00:00 2019-12-09 00:00:00 1970-01-01 00:00:00 2      
+ 4 KLp4290  262451  2019-08-01 00:00:00 2019-08-21 00:00:00 1970-01-01 00:00:00 2      
+ 5 ffR12445 43539   2019-08-02 00:00:00 2019-10-14 00:00:00 1970-01-01 00:00:00 3      
+ 6 ffR32025 872068  2019-08-05 00:00:00 2019-09-19 00:00:00 1970-01-01 00:00:00 13     
+ 7 ffR36495 2629501 2019-08-05 00:00:00 2019-12-12 00:00:00 1970-01-01 00:00:00 17     
+ 8 ffR36505 2871311 2019-08-05 00:00:00 2019-12-04 00:00:00 1970-01-01 00:00:00 5      
+ 9 ffR36680 2871311 2019-08-05 00:00:00 2019-12-04 00:00:00 1970-01-01 00:00:00 3      
+10 ffR48990 180880  2019-08-06 00:00:00 2019-08-06 00:00:00 1970-01-01 00:00:00 2      
+# ... with 249 more rows
+> subset(data_analyst_assignment_csv,DELETED < CREATED,select=(1:6)) %>% length()
+[1] 6
+> subset(data_analyst_assignment_csv,DELETED < CREATED,select=(1:6)) %>% dim()
+[1] 259   6
+
+
+Lastly, these four files belong to “Unknown” user
+
+> data_analyst_assignment_csv[is.na(data_analyst_assignment_csv$USER),]
+# A tibble: 4 x 7
+  FILE_ID USER  CREATED             UPDATED             DELETED             VERSION
+  <chr>   <chr> <dttm>              <dttm>              <dttm>              <chr>  
+1 180360~ NA    2019-09-06 00:00:00 2019-09-06 00:00:00 NA                  1      
+2 ddR515~ NA    2019-10-22 00:00:00 2019-10-22 00:00:00 NA                  1      
+3 ddR520~ NA    2019-10-22 00:00:00 2019-10-22 00:00:00 NA                  1      
+4 Gty215~ NA    2019-10-31 00:00:00 2019-10-31 00:00:00 NA                  1      
+# ... with 1 more variable: file_created_date <chr>
+
+
+Quick Overview of PostClick Data
+
+Here is the quick overview of PostClick Data. Barring data anomalies and data qualities issues, these numbers depict at a high level how well the data looks like.
+
+  Libraries used to analyze this data are:
+
+•	Sqldf
+•	Dplyr
+•	Lubridate
+•	Ggplot2
+
+
+
+                      labels                      data_labels 
+                      "Total Unique Users"        10036       
+                      "Total Files Created"       102133      
+                      "Total Created Days"        92          
+                      "Total Files Updated"       68259       
+                      "Total Files Deleted"       28338       
+                     "Average File Life Span (in days)"    26.43829    
+                      "Users with Multiple files" "7213 (71%)"
+                      "Users with Single file"    "2822 (28%)"
+ 
+
+avg_file_lifespan <- VERSION_column_number                   %>% 
+                             filter(DELETED >= CREATED)      %>%
+                             mutate(file_lifespan_in_days = difftime(as.Date(as.POSIXct(DELETED,origin="1970-01-01")),as.Date(as.POSIXct(CREATED,origin="1970-01-01")),units='days')) %>%
+                             select(FILE_ID,
+                                    USER,
+                                    CREATED,
+                                    UPDATED,
+                                    DELETED,
+                                    VERSION,
+                                    file_lifespan_in_days)         %>%
+                             summarize(average_file_lifespan = mean(file_lifespan_in_days,na.rm=TRUE)) 
+
+labels <- c("Total Unique Users",
+            "Total Files Created",
+            "Total Created Days",
+            "Total Files Updated",
+            "Total Files Deleted",
+            "Average File Life Span (in days)",
+            "Users with Multiple files",
+            "Users with Single file")
+
+data_labels <- c(length(unique(data_analyst_assignment_csv$USER)),
+                 length(unique(data_analyst_assignment_csv$FILE_ID)),
+                 length(unique(data_analyst_assignment_csv$CREATED)),
+                 dim(subset(data_analyst_assignment_csv,UPDATED > CREATED))[1],
+                 dim(data_analyst_assignment_csv[!is.na(data_analyst_assignment_csv$DELETED),])[1],
+                 avg_file_lifespan[1],
+                 paste(multi_single_file_user[,1]," (",multi_single_file_user[,3],"%)",sep=""),
+                 paste(multi_single_file_user[,2]," (",multi_single_file_user[,4],"%)",sep="")
+                )
+
+cbind(labels,data_labels)
+
+
+
+multi_single_file_user <- sqldf("SELECT
+        COUNT(CASE WHEN total_files > 1 THEN user_id ELSE NULL END)                               AS total_users_with_multiple_files,
+        COUNT(CASE WHEN total_files = 1 THEN user_id ELSE NULL END)                               AS total_users_with_one_file,
+        100*COUNT(CASE WHEN total_files > 1 THEN user_id ELSE NULL END) / COUNT(DISTINCT user_id) AS multiple_files_user_per,
+        100*COUNT(CASE WHEN total_files = 1 THEN user_id ELSE NULL END) / COUNT(DISTINCT user_id) AS single_file_user_per
+FROM 
+(
+SELECT
+      USER                    AS user_id,
+      COUNT(DISTINCT FILE_ID) AS total_files 
+FROM data_analyst_assignment_csv
+GROUP BY 1
+) main")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+File Inventory Status:
+It is always insightful to look at the current inventory at hand. Here is the high level file inventory status from August 2019 to October 2019. 
+The assumption for “Updated” files is only when the UPDATED date is greater than the CREATED date. If both dates are equal, then the files are assumed not be “updated”. 
+Active count excludes the files which were “Deleted”.
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Top Users:
+In order to see how users are utilizing the files, this was the most basic and the easiest insight that could be looked at. 
+The chart quite clearly showed an outlier where only one user’s frequency is relatively large compared to the others.
+
+
+> top_15_users <- sqldf("SELECT
++                           USER    AS user_id,
++          COUNT(DISTINCT FILE_ID)  AS total_files
++   FROM data_analyst_assignment_csv
++   GROUP BY user_id 
++   ORDER BY 2 DESC 
++   LIMIT 15 
++   ")
+> 
+> 
+> plot_top_15_users <- ggplot(top_15_users, aes(reorder(x=user_id,total_files), y=total_files)) + 
++     geom_bar(stat = "identity")           +  
++     coord_flip()                          +
++     ggtitle("Top 15 Users with most files created") +
++     ylab("Number of Files")          +
++     xlab("User ID")
+> print(plot_top_15_users)
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+Total and Average File Creation Per Day:
+This trend paints an interesting but steady picture. Barring a sudden peak in the mid of August, the average file creation per day looks pretty steady and consistent. 
+
+
+ > plot_dates_file_created_at <- ggplot(dates_file_created_at, aes(x=date(date_file_created), y=total_files_created)) +  
++     geom_line()                              + 
++     ggtitle("Total Files by Day")            +
++     ylab("Number of Files Created")          +
++     xlab("Day")                              +
++     scale_x_date(date_labels = "%Y (%b)")    
+> print(plot_dates_file_created_at)
+
+
+ 
+> library(lubridate)
+> dates_file_created_at <- data_analyst_assignment_csv %>% 
++     mutate(date_file_created = as.POSIXct(CREATED,origin="1970-01-01")) %>%
++     select(date_file_created,FILE_ID) %>%
++     group_by(date_file_created) %>% 
++     summarize(total_files_created = n_distinct(FILE_ID)) %>%
++     arrange(desc(total_files_created))
+> 
+> plot_dates_file_created_at <- ggplot(dates_file_created_at, aes(x=date(date_file_created), y=total_files_created)) +  
++     geom_line()                              + 
++     ggtitle("Total Files by Day")            +
++     ylab("Number of Files Created")          +
++     xlab("Day")                              +
++     scale_x_date(date_labels = "%Y (%b)")    
+> print(plot_dates_file_created_at)
+
+  
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Total File Creation Per Week Day:
+This gives another interesting insight as to what week days are the busiest for file creation.
+
+
+> print(plot_week_day_file_created_at)
+> library(lubridate)
+> week_day_file_created_at <- data_analyst_assignment_csv %>% 
++     mutate(date_file_created = as.Date(as.POSIXct(CREATED,origin="1970-01-01"))) %>%
++     select(date_file_created,FILE_ID) %>%
++     group_by(date_file_created) %>% 
++     summarize(total_files_created = n_distinct(FILE_ID)) %>%
++     arrange(desc(total_files_created))
+> 
+> plot_week_day_file_created_at <- ggplot(week_day_file_created_at, aes(x=wday(date_file_created,label=TRUE), y=total_files_created,1,group=1)) +  
++     stat_summary(fun.y = sum, geom = "bar")  +
++     ggtitle("Total Files by Week Day")       +
++     ylab("Number of Files Created")          +
++     xlab("Week Day")                         
+> 
+> 
+> print(plot_week_day_file_created_at)
+
+ 
+
+
+
+
+
+File Updated Distribution in Days:
+This analysis gives another insight as to how long it takes for a file to get updated. 
+Majority of the file updates happen on “Day 0”.
+
+> file_update_time_distribution <- data_analyst_assignment_csv %>% 
++     mutate(time_in_days = difftime(as.Date(as.POSIXct(UPDATED,origin="1970-01-01")),as.Date(as.POSIXct(CREATED,origin="1970-01-01")),units='days')) %>%
++     select(time_in_days,FILE_ID) %>%
++     group_by(time_in_days) %>% 
++     summarize(total_files_updated = n_distinct(FILE_ID)) %>%
++     filter(total_files_updated > 0)
+ 
+> plot_file_update_time_distribution <- ggplot(file_update_time_distribution, aes(x=time_in_days, y=total_files_updated)) +  
++     geom_line()                                     + 
++     ggtitle("Files Update Distribution in Days")    +
++     ylab("Number of Files Updated")                 +
++     xlab("Time in Days")                            
+> 
+> print(plot_file_update_time_distribution)
+
+ 
+
+
+
+
+File Update Lifetime:
+After converting the “VERSION” into pure integer column, the trend (histogram) is to see the number of file versions and compare the lifetime in days. 
+Clearly, after bucketing the number of days, it is apparent that the lifespan is fall under 61-90 and 121 – 150. This differs from the “average file lifetime span” since it doesn’t average out the number of days. 
+ 
+
+> total_files_update_VERSION_by_days <- VERSION_column_number                                     %>% 
++     # filter(FILE_ID %in% ('17849000'))      %>%
++     mutate(file_lifespan_in_days = difftime(as.Date(as.POSIXct(DELETED,origin="1970-01-01")),as.Date(as.POSIXct(CREATED,origin="1970-01-01")),units='days')) %>%
++     mutate(lifespan_label = case_when(file_lifespan_in_days >=0  & file_lifespan_in_days  <=30  ~ "0 - 30",
++                                       file_lifespan_in_days >=31 & file_lifespan_in_days  <=60  ~ "31 - 60",
++                                       file_lifespan_in_days >=61 & file_lifespan_in_days  <=90  ~ "61 - 90",
++                                       file_lifespan_in_days >=90 & file_lifespan_in_days  <=120 ~ "91 - 120",
++                                       file_lifespan_in_days >=121 & file_lifespan_in_days <=150 ~ "121 - 150",
++                                       TRUE                                                      ~ ">150"
++     ) 
++     )                        %>%
++     select(FILE_ID,
++            USER,
++            CREATED,
++            UPDATED,
++            DELETED,
++            VERSION,
++            # file_lifespan_in_days,
++            lifespan_label)         %>%
++     group_by(lifespan_label)       %>%
++     summarize(total_files_updated = sum(VERSION)) 
+`summarise()` ungrouping output (override with `.groups` argument)
+> 
+> total_files_update_VERSION_by_days$lifespan_label <- factor(total_files_update_VERSION_by_days$lifespan_label,levels= c("0 - 30","31 - 60","61 - 90","91 - 120","121 - 150", ">150"),ordered=TRUE)
+> total_files_update_VERSION_by_days$total_files_updated <- ifelse(is.na(total_files_update_VERSION_by_days$total_files_updated),0,total_files_update_VERSION_by_days$total_files_updated)
+> total_files_update_VERSION_by_days[order(total_files_update_VERSION_by_days$lifespan_label),]
+# A tibble: 6 x 2
+  lifespan_label total_files_updated
+  <ord>                        <dbl>
+1 0 - 30                           0
+2 31 - 60                          0
+3 61 - 90                      52637
+4 91 - 120                         0
+5 121 - 150                     8058
+6 >150                             0
+> 
+> 
+> 
+> plot_total_files_update_VERSION_by_days <- ggplot(total_files_update_VERSION_by_days, aes((x=total_files_updated), y=lifespan_label)) + 
++     geom_bar(stat = "identity")          +     
++     coord_flip()                         +
++     ggtitle("File Lifetime (in days)")   +
++     ylab("Lifetime (in days)")          +
++     xlab("Total File Versions")
+> print(plot_total_files_update_VERSION_by_days)
+
+
+Executive Summary
+•	The data is generally clean and easy to comprehend and analyze. The only issue was the field “delimiter”. I used the global replace function to convert the delimiter into a single comma.
+•	As for the data quality issues, the “Deleted” column has some dates where were earlier than the file creation date. For “average file span” calculation, I needed to exclude those rows. 
+•	File inventory status is another key metric to see the funnel as a whole. It gives us a nice high level picture of what exists in the data file.
+•	Looking at the most frequent user data, we have got an interesting finding. One particular user generated a lot of files. It can easily be classified as an outlier since most other users with more than one file seem very consistent in this dataset.
+•	Users with multiple files have are clearly on a higher side (71%).
+•	Average file per day shows a sudden spike in the middle of August. 
+
