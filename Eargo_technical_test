@@ -57,7 +57,7 @@ while (remaining_balance >0) {
       quarter_count <- quarter_count + 1 # quarter counts 
     }  
     else if(remaining_balance >=10) {
-      remainig_balance <- remaining_balance - 10
+      remaining_balance <- remaining_balance - 10
       dime_count <- dime_count + 1 # dime counts 
     }  
     else if(remaining_balance >=5) {
