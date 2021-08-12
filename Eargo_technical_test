@@ -67,7 +67,7 @@ while (remaining_balance >0) {
              remaining_balance <- 0 
       }
  }     
-  paste(cents,"" cents equals to: "",quarter_count,"" quarter(s), "",dime_count,"" dime(s), "",nikle_count,"" nikle(s), "",penny_count, "" pennies "")
+  paste(cents," cents equals to: ",quarter_count," quarter(s), ",dime_count," dime(s), ",nikle_count," nikle(s), ",penny_count, " pennies ")
    
  }   
  # calling the function
